@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>{$name}</title>
+    <script src="https://cdn.bootcss.com/jquery/3.2.1/jquery.min.js"></script>
+</head>
+<body>
+<div>
+    <h2 id="dd">{$name}</h2>
+</div>
+
+<form action="" method="post" autocomplete="on" id="from">
+    First name: <input type="text" name="fname" /><br />
+    Last name: <input type="text" name="lname" /><br />
+    E-mail: <input type="email" name="email" autocomplete="off" /><br />
+    <input type="button" onclick="submitform()" />
+</form>
+</body>
+</html>
+
+
+<script>
+    $(function () {
+
+    });
+
+    function submitform() {
+        var url="\\home\\Index\\indexs";
+        $.ajax({
+            type:'post',
+            url:url,
+            data:$('#from').serializeArray(),
+            dataType:'json',
+            success:function (data) {
+                console.log(data);
+            }
+        });
+    }
+
+</script>

@@ -1,0 +1,6 @@
+[2019-11-26 16:41:39]	ERROR	文件:/home/wwwroot/default/framework/Framework/Core/Route.php,第348行出错:Class 'Framework\SwServer\BaseObject' not found
+
+[2019-11-26 16:42:31]	TRACE	文件:/home/wwwroot/default/framework/Framework/SwServer/BaseServerManager.php,第189行出错:chmod(): No such file or directory
+
+[2019-11-26 16:42:34]	ERROR	文件:/home/wwwroot/default/framework/Framework/Core/Route.php,第347行出错:Class 'Framework\SwServer\BaseObject' not found
+
