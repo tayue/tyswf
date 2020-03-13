@@ -14,7 +14,6 @@ return [
         'listen_port' => 9501,
         'www_user' => 'root',
         'setting' => [
-            'open_http2_protocol' => true,
             'reactor_num' => 1,
             'worker_num' => 4,
             'max_request' => 10000,
