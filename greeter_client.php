@@ -6,6 +6,7 @@ ini_set("error_reporting", E_ALL);//显示所有错误
 use App\Protobuf\GreeterClient;
 use App\Protobuf\HelloRequest;
 use App\Protobuf\HelloReply;
+use Google\Protobuf\Internal\Message;
 use Framework\SwServer\Grpc\Parser;
 
 $name = !empty($argv[1]) ? $argv[1] : 'Swoole';
@@ -14,17 +15,17 @@ $name = !empty($argv[1]) ? $argv[1] : 'Swoole';
 go(function () use ($name) {
     try {
         $opt = ['package_max_length' => 9000000];
-        $greeterClient = new GreeterClient('192.168.99.88:50051', $opt);
+        $greeterClient = new GreeterClient('192.168.99.88:9501', $opt);
         $greeterClient->start();
         $request = new HelloRequest();
         $request->setName($name);
-        list($reply, $status,$response) = $greeterClient->SayHello($request);
-
-        if($reply instanceof HelloReply){
+        list($reply, $status,$response) = $greeterClient->SayHello1($request);
+          print_r($response);
+        if($reply instanceof Message){
             $message = $reply->getMessage();
-            echo "{$message}--------\n";
-        }else{
-            echo "faild\r\n";
+            echo "success {$message}\r\n";
+        }else if(is_string($reply)){
+            echo "{$reply}==>{$status}\r\n";
         }
 
 

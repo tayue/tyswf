@@ -1,5 +1,12 @@
 <?php
 
+/**
+ * 命令行执行多进程任务处理
+ * User: dengh
+ * Date: 2020/03/8
+ * Time: 15:53
+ */
+
 namespace App\Cmd;
 
 use Symfony\Component\Console\Command\Command;

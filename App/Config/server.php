@@ -9,11 +9,12 @@ return [
     'open_table_tick_task' => true,
     'server' => [
         'pid_file' => ROOT_PATH . '/Data/pid.pid',
-        'server_type' => 'WEB_SERVER',
+        'server_type' => 'GRPC_SERVER',
         'listen_address' => '192.168.99.88',
         'listen_port' => 9501,
         'www_user' => 'root',
         'setting' => [
+            'open_http2_protocol' => true,
             'reactor_num' => 1,
             'worker_num' => 4,
             'max_request' => 10000,

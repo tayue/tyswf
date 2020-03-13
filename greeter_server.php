@@ -17,6 +17,7 @@ $http->on('workerStart', function (swoole_http_server $server) {
     echo "php " . __DIR__ . "/greeter_client.php\n";
 });
 $http->on('request', function (swoole_http_request $request, swoole_http_response $response) use ($http) {
+    print_r($request);
     $path = $request->server['request_uri'];
     if($path=='/favicon.ico'){
          return;

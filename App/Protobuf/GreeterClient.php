@@ -19,6 +19,7 @@
 namespace App\Protobuf;
 
 use App\Protobuf\HelloReply;
+
 use App\Protobuf\HelloRequest;
 
 use Framework\SwServer\Grpc\BaseStub;
@@ -53,10 +54,13 @@ class GreeterClient extends BaseStub {
     }
 
 
-    public function SayHello1($metadata = [], $options = []) {
-        return $this->_clientStreamRequest('/helloworld.Greeter/SayHello',
-            ['\App\Protobuf\HelloReply', 'decode'],
-            $metadata, $options);
+    public function SayHello1(HelloRequest $argument,
+                             $metadata = [], $options = []) {
+            return $this->_simpleRequest('home/grpc/grpc',
+                $argument,
+                [HelloReply::class, 'decode'],
+                $metadata, $options);
     }
+
 
 }
