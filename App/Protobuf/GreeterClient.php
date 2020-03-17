@@ -27,14 +27,16 @@ use Framework\SwServer\Grpc\BaseStub;
 /**
  * The greeting service definition.
  */
-class GreeterClient extends BaseStub {
+class GreeterClient extends BaseStub
+{
 
     /**
      * @param string $hostname hostname
      * @param array $opts channel options
      * @param \Grpc\Channel $channel (optional) re-use channel object
      */
-    public function __construct($hostname, $opts = []) {
+    public function __construct($hostname, $opts = [])
+    {
         parent::__construct($hostname, $opts);
     }
 
@@ -46,20 +48,22 @@ class GreeterClient extends BaseStub {
      * @return \App\Protobuf\HelloReply[]|\Grpc\StringifyAble[]
      */
     public function SayHello(HelloRequest $argument,
-      $metadata = [], $options = []) {
+                             $metadata = [], $options = [])
+    {
         return $this->_simpleRequest('/helloworld.Greeter/SayHello',
-        $argument,
-        [HelloReply::class, 'decode'],
-        $metadata, $options);
+            $argument,
+            [HelloReply::class, 'decode'],
+            $metadata, $options);
     }
 
 
     public function SayHello1(HelloRequest $argument,
-                             $metadata = [], $options = []) {
-            return $this->_simpleRequest('home/grpc/grpc',
-                $argument,
-                [HelloReply::class, 'decode'],
-                $metadata, $options);
+                              $metadata = [], $options = [])
+    {
+        return $this->_simpleRequest('home/grpc/index',
+            $argument,
+            [HelloReply::class, 'decode'],
+            $metadata, $options);
     }
 
 

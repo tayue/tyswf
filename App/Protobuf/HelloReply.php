@@ -52,6 +52,7 @@ class HelloReply extends \Google\Protobuf\Internal\Message
     {
         GPBUtil::checkString($var, True);
         $this->message = $var;
+
         return $this;
     }
 

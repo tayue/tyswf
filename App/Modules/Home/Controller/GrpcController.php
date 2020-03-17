@@ -13,18 +13,15 @@ class GrpcController extends ServerController
 {
     public $request;
 
-
-    public function grpcAction(HelloRequest $request,$a)
+    public function indexAction(HelloRequest $request)
     {
-        $name=isset($_REQUEST['name']) ? $_REQUEST['name'] : "test";
+        $this->request=$request;
+        $name=isset($_REQUEST['name']) ? $_REQUEST['name'] : $this->request->getName();
         try {
             if ($request) {
-                $name= $name ? $name : $request->getName();
                 $response_message = new HelloReply();
                 $response_message->setMessage('Hello ' . $name);
                 return $response_message;
-
-
             }
         } catch (\Throwable $e) {
             echo $e->getMessage();

@@ -16,6 +16,7 @@ go(function () use ($name) {
     try {
         $opt = ['package_max_length' => 9000000];
         $greeterClient = new GreeterClient('192.168.99.88:9501', $opt);
+
         $greeterClient->start();
         $request = new HelloRequest();
         $request->setName($name);
@@ -28,8 +29,6 @@ go(function () use ($name) {
             echo "{$reply}==>{$status}\r\n";
         }
 
-
-        // sleep(3);
         $greeterClient->close();
     } catch (Throwable $e) {
         echo $e->getMessage();
