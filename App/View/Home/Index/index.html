@@ -5,33 +5,49 @@
     <script src="https://cdn.bootcss.com/jquery/3.2.1/jquery.min.js"></script>
 </head>
 <body>
-<div>
-    <h2 id="dd">{$name}</h2>
-</div>
 
-<form action="" method="post" autocomplete="on" id="from">
+
+<form action="/home/index/post" method="post" autocomplete="on">
     First name: <input type="text" name="fname" /><br />
     Last name: <input type="text" name="lname" /><br />
     E-mail: <input type="email" name="email" autocomplete="off" /><br />
-    <input type="button" onclick="submitform()" />
+    Password: <input type="password" name="password" autocomplete="off" /><br />
+    <input type="submit" value="submit" id="submitButton" />
 </form>
+
+<div class="pArcList">
+    <h2 id="dd">hello world!</h2>
+    <div class="divArea">
+        <span id="span">Button</span>
+    </div>
+</div>
+
+<a href='/list.html'>content</a>
+
+<button onclick="ajax();">ajax</button>
+
+
+
 </body>
 </html>
 
 
 <script>
-    $(function () {
 
-    });
 
-    function submitform() {
-        var url="\\home\\Index\\indexs";
+    function ajax() {
+        console.log("ajax enter\r\n");
+        var url="/home/test/ajax";
         $.ajax({
-            type:'post',
+            type:'get',
             url:url,
-            data:$('#from').serializeArray(),
+            data:{},
             dataType:'json',
             success:function (data) {
+                $.each(data, function(key, val){
+                    $("<div class='contentDiv'>'"+val.name+"'</div>").appendTo(".pArcList");
+
+                });
                 console.log(data);
             }
         });

@@ -10,9 +10,8 @@ use Framework\SwServer\ServerController;
 class TestController  extends ServerController
 {
    public function indexAction(){
-       echo "indexAction\r\n";
-       $users=ServerManager::getApp()->userService->findUser();
-       print_r($users);
+       echo "indexAction";
+
    }
 
     public function grpcAction(HelloRequest $request)
@@ -38,5 +37,10 @@ class TestController  extends ServerController
         } catch (\Throwable $e) {
             echo $e->getMessage();
         }
+    }
+
+    public function ajaxAction()
+    {
+     echo json_encode([["name"=>'tayue','age'=>30],["name"=>'zhangsan','age'=>31]]);
     }
 }

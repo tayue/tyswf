@@ -435,4 +435,9 @@ class IndexController extends ServerController
     public function corotest(){
 
     }
+
+    public function postAction(){
+        print_r($_REQUEST);
+        echo "Register Success !";
+    }
 }
