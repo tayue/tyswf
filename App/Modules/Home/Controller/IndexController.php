@@ -31,10 +31,14 @@ use Framework\SwServer\Inotify\Daemon;
 use Framework\SwServer\ServerController;
 use Framework\SwServer\Event\Event;
 use Framework\SwServer\Event\EventManager;
+use Framework\SwServer\Annotation\AnnotationRegister;
 use Framework\SwServer\Pool\DiPool;
 use Swoole\Runtime;
 use Framework\SwServer\Helper\Helper;
 use Framework\SwServer\RateLimit\RateLimit;
+use App\Service\Test;
+use App\Dao\OrderDao;
+
 
 class IndexController extends ServerController
 {
@@ -42,6 +46,13 @@ class IndexController extends ServerController
     public $util;
     private $event;
     public $tool;
+
+
+    public function init()
+    {
+        parent::init();
+        $this->echo2br("init\r\n");
+    }
 
 
     public function __construct(User $userService, Util $util)
@@ -59,18 +70,39 @@ class IndexController extends ServerController
         var_dump($context);
     }
 
-    public function destroyAction(){
+    public function destroyAction()
+    {
         ServerManager::$eventManager->trigger("consulServiceDestroy");
         echo "Destroy Success";
     }
 
     public function indexAction(Tool $tool, Crypt $crypt, Event $e, SendSmsListener $smlistener, SendEmailsListener $semaillistener)
     {
-        $res=RateLimit::getInstance()->minLimit('indexAction',function (){
-            echo "Rate Limit:".date("Y-m-d H:i:s")."\r\n";
+        print_r(AnnotationRegister::getInstance()->getAspectAnnotations());
+        $orderdaoclassname=OrderDao::class;
+        $orderDao=ServerManager::getApp()->$orderdaoclassname;
+
+        $orderDao->createUser([11,22,33]);
+//        $object=DiPool::getInstance()->register(Test::class); //向容器内注册对象
+//        echo "-------------------------------------\r\n";
+//        print_r($object);
+        // print_r(DiPool::getInstance()->getSingletons());
+//        echo "#######################################\r\n";
+//        print_r(DiPool::getInstance()->get(Test::class));
+
+//        var_dump(IndexController::class);
+////        print_r(ServerManager::$app);
+//        print_r(ServerManager::getApp());
+//        var_dump(ServerManager::getApp()->request->get);
+//        print_r($this->httpInput);
+//        print_r($this->httpInput->getAllGet());
+//        print_r($this->httpInput->postGet("test"));;
+
+        $res = RateLimit::getInstance()->minLimit('indexAction', function () {
+            echo "Rate Limit:" . date("Y-m-d H:i:s") . "\r\n";
         }); //方法控制限流
-        if(!$res['flag']){
-            throw  new \Exception($res['msg']."\r\n");
+        if (!$res['flag']) {
+            throw  new \Exception($res['msg'] . "\r\n");
         }
 
 //        go(function () {
@@ -81,8 +113,8 @@ class IndexController extends ServerController
         //$serviceId = Helper::registerService('swoft',"192.168.99.88",9501);
         //Helper::removeService($serviceId);
         //var_dump($serviceId);
-       // $response = Agent::getInstance()->deregisterService($serviceId);
-       // print_r($response);
+        // $response = Agent::getInstance()->deregisterService($serviceId);
+        // print_r($response);
 //        $context = Co::getContext();
 //        $context["test"] = "haha";
 //        $context["dd"] = "dd";
@@ -127,10 +159,11 @@ class IndexController extends ServerController
 
         //$em=ServerManager::getApp()->eventmanager;
 //        $services=DiPool::getInstance()->getServices();
+//        print_r($services);
 //        $comments=DiPool::getInstance()->getComponents();
 
 
-          //$em->attach("consulRegister","App\Listener\SendSmsListener");
+        //$em->attach("consulRegister","App\Listener\SendSmsListener");
 //        $e->setName("createorder");
 //        $em->addListener($smlistener,["createorder"=>1]);
 //        $em->addListener($semaillistener,["createorder"=>2]);
@@ -171,13 +204,13 @@ class IndexController extends ServerController
 //                echo $e->getMessage();
 //            }
 
-        // $userData1 = ServerManager::getApp()->userService->findUser();
+        $userData1 = ServerManager::getApp()->userService->findUser();
 //       // $userData2 = ServerManager::getApp()->userService->findUser();
-        $userData1=$this->userService->findUser();
-//        $userData2=$this->userService->findUser();
-
-        // print_r(ServerManager::getApp('cid_4'));
-
+//        $userData1 = $this->userService->findUser();
+////        $userData2=$this->userService->findUser();
+//
+//        // print_r(ServerManager::getApp('cid_4'));
+//
         print_r($userData1);
 //        $components=DiPool::getInstance()->getComponents();
 //        print_r($components);
@@ -407,11 +440,6 @@ class IndexController extends ServerController
         echo $id;
     }
 
-    public
-    function init()
-    {
-        $this->echo2br("init\r\n");
-    }
 
     public
     function __beforeAction()
@@ -432,11 +460,13 @@ class IndexController extends ServerController
         echo nl2br($str);
     }
 
-    public function corotest(){
+    public function corotest()
+    {
 
     }
 
-    public function postAction(){
+    public function postAction()
+    {
         print_r($_REQUEST);
         echo "Register Success !";
     }

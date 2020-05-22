@@ -43,4 +43,9 @@ class TestController  extends ServerController
     {
      echo json_encode([["name"=>'tayue','age'=>30],["name"=>'zhangsan','age'=>31]]);
     }
+
+    public function postAction()
+    {
+         file_put_contents("./post.txt",var_export(ServerManager::getApp()->request->post,true),FILE_APPEND);
+    }
 }

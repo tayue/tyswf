@@ -22,12 +22,6 @@ class HelloRequest extends \Google\Protobuf\Internal\Message
 
     /**
      * Constructor.
-     *
-     * @param array $data {
-     *     Optional. Data for populating the Message object.
-     *
-     *     @type string $name
-     * }
      */
     public function __construct($data = NULL) {
         \GPBMetadata\Helloworld::initOnce();
@@ -45,8 +39,6 @@ class HelloRequest extends \Google\Protobuf\Internal\Message
 
     /**
      * Generated from protobuf field <code>string name = 1;</code>
-     * @param string $var
-     * @return $this
      */
     public function setName($var)
     {

@@ -2,7 +2,7 @@
     "name": "root/myframework",
     "require": {
         "symfony/console": "@stable",
-        "tayue/swf": "^0.3.1",
+        "tayue/swf": "^0.5.1",
         "codeception/codeception": "^4.1",
         "codeception/module-phpbrowser": "^1.0.0",
         "codeception/module-asserts": "^1.0.0"

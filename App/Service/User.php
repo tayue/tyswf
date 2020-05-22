@@ -29,6 +29,7 @@ class User
 
     public function findUser()
     {
+ 
         $userData = DiPool::getInstance()->get("db")->table('user')->find();
         $this->crypt->display();
         return $userData;

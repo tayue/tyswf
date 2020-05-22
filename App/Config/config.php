@@ -20,6 +20,7 @@ return [
     'current_module' => '',
     'current_controller' => '',
     'current_action' => '',
+    'onlyScanNamespaces'=>['App\\'],
     'basePath' => dirname(__DIR__),
     'include_files'=>[__DIR__.DIRECTORY_SEPARATOR.'config.php',__DIR__.DIRECTORY_SEPARATOR.'server.php'], //重启工作进程时需要重新载入的配置文件
     'log'=>[
@@ -99,10 +100,12 @@ return [
         ],
     ],
     'services'=>[
-        'userService' => [
-            'class' => 'App\Service\User',
-            'arr' => [1, 2, 3,4],
-       ],
+       'userService' => [
+            'class' => 'App\Service\UserService'
+        ],
+        'orderService' => [
+            'class' => 'App\Service\OrderService'
+        ],
         'cryptService' => [
             'class' => 'App\Service\Crypt'
        ],
