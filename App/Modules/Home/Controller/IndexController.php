@@ -14,6 +14,8 @@ use App\Listener\SendEmailsListener;
 use Framework\Core\Controller;
 use App\Service\User;
 use App\Service\Crypt;
+use Framework\SwServer\Aop\PipelineAop;
+use Framework\SwServer\Aop\ProceedingJoinPoint;
 use Framework\Tool\Tool;
 use Framework\SwServer\Task\TaskManager;
 use Framework\Tool\PluginManager;
@@ -38,14 +40,25 @@ use Framework\SwServer\Helper\Helper;
 use Framework\SwServer\RateLimit\RateLimit;
 use App\Service\Test;
 use App\Dao\OrderDao;
-
-
+use Framework\SwServer\Guzzle\ClientFactory;
+use Framework\SwServer\Tracer\HttpClientFactory;
+use Framework\SwServer\Tracer\TracerFactory;
+use App\Middleware\TraceMiddleware;
+use App\Handler\HttpHandler;
+use Framework\Tool\Pipeline;
+use App\Annotation\Bean;
+use Framework\SwServer\Http\HttpJoinPoint;
+use Framework\SwServer\Http\PipelineHttpHandleAop;
 class IndexController extends ServerController
 {
     public $userService;
     public $util;
     private $event;
     public $tool;
+    /**
+     * @Bean(name="orderDao")
+     */
+    public $orderDao;
 
 
     public function init()
@@ -76,17 +89,67 @@ class IndexController extends ServerController
         echo "Destroy Success";
     }
 
+    private function initTracker(){
+        $container=DiPool::getInstance();
+        $container->setSingletonByObject(ClientFactory::class,new ClientFactory($container));
+        $container->setSingletonByObject(HttpClientFactory::class,new HttpClientFactory($container->getSingleton(ClientFactory::class)));
+        $container->setSingletonByObject(TracerFactory::class,new TracerFactory($container->getSingleton(HttpClientFactory::class)));
+        $TracerFactory=$container->getSingleton(TracerFactory::class);
+        $tracer=$TracerFactory->getTracer();
+        $container->setSingletonByObject(TraceMiddleware::class,new TraceMiddleware($tracer));
+    }
+
     public function indexAction(Tool $tool, Crypt $crypt, Event $e, SendSmsListener $smlistener, SendEmailsListener $semaillistener)
     {
-        print_r(AnnotationRegister::getInstance()->getAspectAnnotations());
-        $orderdaoclassname=OrderDao::class;
-        $orderDao=ServerManager::getApp()->$orderdaoclassname;
+        $daos=DiPool::getInstance()->getDaos();
+        print_r($daos);
+//        $list=CoroutineManager::getInstance()->listCoroutines();
+//       // print_r($list);
+//        echo CoroutineManager::getInstance()->getCoroutineId()." --------\r\n";
+//        $request=CoroutineManager::get('tracer.request');
+//
+//        $container=DiPool::getInstance();
+//        $this->initTracker();
+//        //$handler=new HttpHandler($this->response);
+//        $TraceMiddleware=$container->getSingleton(TraceMiddleware::class);
+//        $response=$TraceMiddleware->process();
 
+//
+//        $pipes1=[$TraceMiddleware];
+//        //$pipes=[new Handler1(),new Handler2(),new Handler3(),new Handler4()];
+//
+//
+//        $res= (new Pipeline())->via('process')->send($request)->through($pipes1)->then(function ($post) {
+//            return $post;
+//        }); // 执行输出为 2
+//
+//
+//
+//
+//
+//        $responce=$TraceMiddleware->process($request,$handler);
+//
+//        print_r($responce);
+
+       // print_r(DiPool::getInstance()->getSingletons());
+
+       // print_r($request);
+
+        $orderDao=ServerManager::getApp()->orderDao;
+        print_r($orderDao);
+        print_r($orderDao->getUserService());
+
+
+
+
+        //print_r(AnnotationRegister::getInstance()->getAspectAnnotations());
+        //$orderdaoclassname=OrderDao::class;
+        //$orderDao=ServerManager::getApp()->$orderdaoclassname;
         $orderDao->createUser([11,22,33]);
 //        $object=DiPool::getInstance()->register(Test::class); //向容器内注册对象
 //        echo "-------------------------------------\r\n";
 //        print_r($object);
-        // print_r(DiPool::getInstance()->getSingletons());
+       // print_r(DiPool::getInstance()->getSingletons());
 //        echo "#######################################\r\n";
 //        print_r(DiPool::getInstance()->get(Test::class));
 
@@ -204,7 +267,7 @@ class IndexController extends ServerController
 //                echo $e->getMessage();
 //            }
 
-        $userData1 = ServerManager::getApp()->userService->findUser();
+         $userData1 = ServerManager::getApp()->userService->findUser();
 //       // $userData2 = ServerManager::getApp()->userService->findUser();
 //        $userData1 = $this->userService->findUser();
 ////        $userData2=$this->userService->findUser();

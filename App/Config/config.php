@@ -8,30 +8,30 @@
 return [
     'id' => 'app',
     'routeRule' => 1, //1:PATHINFO 2:QUERY
-    'consulRegister'=>false, //是否开启consul服务注册
-    'is_swoole_http_server'=>true,
+    'consulRegister' => false, //是否开启consul服务注册
+    'is_swoole_http_server' => true,
     'project_namespace' => 'App', //1:模块化组织 2:非模块化组织
     'project_type' => 1, //1:模块化组织 2:非模块化组织
     'default_module' => 'Home', //1:PATHINFO 2:QUERY
     'default_controller' => 'Index',
-    'timeZone'=>'PRC',
-    'test_mark'=>"cc",
+    'timeZone' => 'PRC',
+    'test_mark' => "cc",
     'default_action' => 'index',
     'current_module' => '',
     'current_controller' => '',
     'current_action' => '',
-    'onlyScanNamespaces'=>['App\\'],
+    'onlyScanNamespaces' => ['App\\'],
     'basePath' => dirname(__DIR__),
-    'include_files'=>[__DIR__.DIRECTORY_SEPARATOR.'config.php',__DIR__.DIRECTORY_SEPARATOR.'server.php'], //重启工作进程时需要重新载入的配置文件
-    'log'=>[
-        'log_dir'=>dirname(__DIR__).DIRECTORY_SEPARATOR.'Log',
-        'is_display'=>true
+    'include_files' => [__DIR__ . DIRECTORY_SEPARATOR . 'config.php', __DIR__ . DIRECTORY_SEPARATOR . 'server.php'], //重启工作进程时需要重新载入的配置文件
+    'log' => [
+        'log_dir' => dirname(__DIR__) . DIRECTORY_SEPARATOR . 'Log',
+        'is_display' => true
     ],
     'components' => [
         'tool' => [
             'class' => 'Framework\Tool\Tool',
             'arr' => [1, 2, 3],
-         ],
+        ],
         'db' => [
             'is_destroy' => 0,//每次请求后是否销毁对象
             'is_delay' => true,//延迟创建实例，请求时候再创建
@@ -88,9 +88,9 @@ return [
         'view' => [
             'class' => 'Framework\SwServer\View',
             'config' => [
-             ],
+            ],
         ],
-        'eventmanager'=>[
+        'eventmanager' => [
             'class' => 'Framework\SwServer\Event\EventManager',
         ],
         'user' => [
@@ -99,15 +99,22 @@ return [
 
         ],
     ],
-    'services'=>[
-       'userService' => [
+    'services' => [
+        'userService' => [
             'class' => 'App\Service\UserService'
         ],
         'orderService' => [
             'class' => 'App\Service\OrderService'
         ],
-        'cryptService' => [
-            'class' => 'App\Service\Crypt'
-       ],
-    ]
+    ],
+    'daos' => [
+        'orderDao' => [
+            'class' => 'App\Dao\OrderDao'
+        ],
+    ],
+
+    'httpMiddlewares' => [
+        'App\Middleware\TracerMiddleware',
+        'App\Middleware\RequestMiddleware',
+    ],
 ];

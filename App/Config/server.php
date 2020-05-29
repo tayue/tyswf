@@ -138,10 +138,22 @@ return [
         'afterNSeconds' => 3,
         'isOnline' => false,
         'monitorPort' => 9501,
-        'monitorPath' => '/home/wwwroot/default/framework',
+        'monitorPath' => '/home/wwwroot/default/localcomposertest/App',
         'logFilePath' => dirname(__DIR__) . DIRECTORY_SEPARATOR . 'Log' . DIRECTORY_SEPARATOR . 'inotify.log',
         'monitorProcessName' => 'php-inotify-swoole-server',
         'reloadFileTypes' => ['.php', '.html', '.js'],
-    ]
+    ],
+    'tracer' => [
+        [
+            'name' => 'tyswf',
+            'ipv4' => '192.168.99.88',
+            'ipv6' => null,
+            'port' => 9501,
+        ],
+        [
+            'endpoint_url' => 'http://192.168.99.88:9411/api/v2/spans',
+            'timeout' => 1,
+        ]
+    ],
 
 ];

@@ -2,16 +2,30 @@
 
 
 namespace App\Modules\Home\Controller;
+use App\Dao\OrderDao;
 use App\Protobuf\GreeterClient;
 use App\Protobuf\HelloReply;
 use App\Protobuf\HelloRequest;
+use Framework\SwServer\Annotation\AnnotationRegister;
+use Framework\SwServer\Pool\DiPool;
 use Framework\SwServer\ServerManager;
 use Framework\SwServer\ServerController;
 class TestController  extends ServerController
 {
    public function indexAction(){
        echo "indexAction";
+       $className = OrderDao::class;
+       $methodName = "createUser";
+       if (AnnotationRegister::checkIsHasAspectAnnotation($className, $methodName)) {
+           $proxyClassName = $className . "Aop";
+           $dis=DiPool::getInstance()->getSingletons();
+           print_r($dis);
+           $dao = DiPool::getInstance()->get($proxyClassName);
 
+           $orderData = array(1, 2, 4);
+           echo $res = $dao->$methodName($orderData);
+
+       }
    }
 
     public function grpcAction(HelloRequest $request)

@@ -19,6 +19,8 @@ defined('SWOOLE_PACK_CHECK_EOF') or define('SWOOLE_PACK_CHECK_EOF', 'eof');
 // 日志目录
 define('LOG_PATH',APP_PATH.'/Log');
 
+define('TEXT_MAP','text_map');
+
 // 定义smarty
 define('SMARTY_TEMPLATE_PATH',APP_PATH.'/View/');
 define('SMARTY_COMPILE_DIR',APP_PATH.'/Runtime/');
