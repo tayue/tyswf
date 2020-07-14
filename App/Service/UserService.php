@@ -6,7 +6,10 @@ namespace App\Service;
 
 use Framework\SwServer\Pool\DiPool;
 
-class UserService
+use Framework\SwServer\Rpc\Annotation\Mapping\RpcService;
+
+
+class UserService implements UserInterface
 {
     public function notify($orderData)
     {
@@ -17,8 +20,13 @@ class UserService
     public function findUser()
     {
 
-        $userData = DiPool::getInstance()->get("db")->table('user')->find();
+        $userData = [];
          
         return $userData;
+    }
+
+
+    public function getList(int $uid, string $type){
+        return [$uid,$type];
     }
 }

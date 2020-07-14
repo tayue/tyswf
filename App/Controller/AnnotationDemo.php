@@ -7,8 +7,11 @@ use App\Annotation\BeforeAspect;
 use App\Annotation\AfterAspect;
 use App\Annotation\Bean;
 use App\Service\UserService;
+use Framework\SwServer\Router\Annotation\Controller;
+use Framework\SwServer\Router\Annotation\RequestMapping;
 /**
  * @AnnotatedDescription("这是一个用于展示Annotation类的例子。")
+ * @Controller(prefix="user")
  */
 class AnnotationDemo
 {
@@ -31,6 +34,20 @@ class AnnotationDemo
     public function getProperty()
     {
         return $this->property;
+    }
+
+    /**
+     * @RequestMapping(path="index/{id:\d+}", methods="get,post,put,delete")
+     */
+    public function indexAction($id){
+        echo '/user/index/'.$id;
+    }
+
+    /**
+     * @RequestMapping(path="test", methods="get,post,put,delete,header")
+     */
+    public function testAction(){
+        echo '/user/test';
     }
 
     /**

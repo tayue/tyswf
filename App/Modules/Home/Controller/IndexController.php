@@ -11,11 +11,14 @@ namespace App\Modules\Home\Controller;
 use App\Service\Util;
 use App\Listener\SendSmsListener;
 use App\Listener\SendEmailsListener;
-use Framework\Core\Controller;
+use App\Listener\MessageConsumeOverTimeListener;
+use App\Listener\ConfirmMessageConsumeListener;
+use Framework\SwServer\Router\Annotation\Controller;
 use App\Service\User;
 use App\Service\Crypt;
 use Framework\SwServer\Aop\PipelineAop;
 use Framework\SwServer\Aop\ProceedingJoinPoint;
+use Framework\SwServer\Pool\RabbitPoolManager;
 use Framework\Tool\Tool;
 use Framework\SwServer\Task\TaskManager;
 use Framework\Tool\PluginManager;
@@ -25,7 +28,6 @@ use Framework\SwServer\Coroutine\CoroutineManager;
 use mysqli;
 use PDO;
 use Predis\Client;
-
 use Swoole\Coroutine as co;
 use Framework\SwServer\Pool\MysqlPoolManager;
 use Framework\SwServer\Pool\RedisPoolManager;
@@ -35,6 +37,8 @@ use Framework\SwServer\Event\Event;
 use Framework\SwServer\Event\EventManager;
 use Framework\SwServer\Annotation\AnnotationRegister;
 use Framework\SwServer\Pool\DiPool;
+use Swoole\Coroutine as SwCoroutine;
+
 use Swoole\Runtime;
 use Framework\SwServer\Helper\Helper;
 use Framework\SwServer\RateLimit\RateLimit;
@@ -49,6 +53,17 @@ use Framework\Tool\Pipeline;
 use App\Annotation\Bean;
 use Framework\SwServer\Http\HttpJoinPoint;
 use Framework\SwServer\Http\PipelineHttpHandleAop;
+use App\Service\RabbitMqService;
+use App\Service\RabbitTransactionService;
+use App\Service\CommonService;
+use App\Service\MessageService;
+
+
+use Framework\SwServer\Router\Annotation\RequestMapping;
+
+/**
+ * @Controller(prefix="site/index")
+ */
 class IndexController extends ServerController
 {
     public $userService;
@@ -60,7 +75,6 @@ class IndexController extends ServerController
      */
     public $orderDao;
 
-
     public function init()
     {
         parent::init();
@@ -70,7 +84,6 @@ class IndexController extends ServerController
 
     public function __construct(User $userService, Util $util)
     {
-
         $this->userService = $userService;
         $this->util = $util;
     }
@@ -89,20 +102,159 @@ class IndexController extends ServerController
         echo "Destroy Success";
     }
 
-    private function initTracker(){
-        $container=DiPool::getInstance();
-        $container->setSingletonByObject(ClientFactory::class,new ClientFactory($container));
-        $container->setSingletonByObject(HttpClientFactory::class,new HttpClientFactory($container->getSingleton(ClientFactory::class)));
-        $container->setSingletonByObject(TracerFactory::class,new TracerFactory($container->getSingleton(HttpClientFactory::class)));
-        $TracerFactory=$container->getSingleton(TracerFactory::class);
-        $tracer=$TracerFactory->getTracer();
-        $container->setSingletonByObject(TraceMiddleware::class,new TraceMiddleware($tracer));
+    private function initTracker()
+    {
+        $container = DiPool::getInstance();
+        $container->setSingletonByObject(ClientFactory::class, new ClientFactory($container));
+        $container->setSingletonByObject(HttpClientFactory::class, new HttpClientFactory($container->getSingleton(ClientFactory::class)));
+        $container->setSingletonByObject(TracerFactory::class, new TracerFactory($container->getSingleton(HttpClientFactory::class)));
+        $TracerFactory = $container->getSingleton(TracerFactory::class);
+        $tracer = $TracerFactory->getTracer();
+        $container->setSingletonByObject(TraceMiddleware::class, new TraceMiddleware($tracer));
     }
 
-    public function indexAction(Tool $tool, Crypt $crypt, Event $e, SendSmsListener $smlistener, SendEmailsListener $semaillistener)
+    public function getRabbit()
     {
-        $daos=DiPool::getInstance()->getDaos();
-        print_r($daos);
+        if ($this->connectionRabbit) {
+            return $this->connectionRabbit;
+        }
+        $resourceData = RabbitPoolManager::getInstance()->get(0.1);
+        if (!$resourceData) {
+            throw new \Exception("Not Has Rabbit Pool Connection!!!");
+        }
+        defer(function () use ($resourceData) {
+            RabbitPoolManager::getInstance()->put($resourceData);
+        });
+        $this->connectionRabbit = $resourceData;
+    }
+
+    private function sendMessage($msg_id)
+    {
+        $exchangeName = 'tradeExchange';
+        $routeKey = '/trade';
+        $queueName = 'trade';
+        $connectionRedis = CommonService::getRedis();
+        $data = $connectionRedis->hget("message_system", (string)$msg_id);
+//        $messageService=DiPool::getInstance()->getSingleton(MessageService::class);
+//       //投递消息
+//        $messageRes = $messageService->produceMessage($data, $exchangeName, $queueName, $routeKey);
+//         var_dump($messageRes);
+    }
+
+
+    /**
+     * @RequestMapping(path="index/{id:\d+}", methods="get,post,put,delete")
+     */
+    public function indexAction(Tool $tool, Crypt $crypt, Event $e, SendSmsListener $smlistener, SendEmailsListener $semaillistener, MessageConsumeOverTimeListener $messageListener, $id)
+    {
+        // echo "[" . date('Y-m-d H:i:s') . "] Current Use RedisPoolManager Connetction Look Nums:" . RedisPoolManager::getInstance()->getLength() . ",currentNum:" . RedisPoolManager::getInstance()->getCurrentConnectionNums() . PHP_EOL;
+        echo $id . "_\r\n";
+        CommonService::setConfig(ServerManager::$config);
+        CommonService::setRedis();
+        CommonService::setRabbit();
+        $rabbit = CommonService::getRabbit();
+        if ($rabbit->isConnected()) {
+            echo "rabbit connection!\r\n";
+        }
+//        $redis=SwCoroutine::getContext(CoroutineManager::getInstance()->getCoroutineId())['redis'];
+//        $aa=SwCoroutine::getContext();
+//        print_r($aa['redis']);
+//        print_r($redis);
+        echo CoroutineManager::getInstance()->getCoroutineId() . "_____\r\n";
+//        $msg_id = "13bf96280d29783e713fd9df786a5319rjpm8rhlmlbbohfres29tff25e";
+//        $this->sendMessage($msg_id);
+
+
+//        if(!$redis->exists("library")){
+//            $redis->set("library",date("Y-m-d H:i:s"));
+//        }
+//        $id=$redis->get('library');
+//        var_dump($id);
+
+//        for($i=1;$i<=RabbitPoolManager::getInstance()->getLength();$i++){
+//            $rabbitmq = RabbitPoolManager::getInstance()->get(0.1);
+//        }
+//
+//        for($i=1;$i<=RedisPoolManager::getInstance()->getLength();$i++){
+//            $redis = RedisPoolManager::getInstance()->get(0.1);
+//        }
+//
+//        for($i=1;$i<=MysqlPoolManager::getInstance()->getLength();$i++){
+//            $mysql = MysqlPoolManager::getInstance()->get(0.1);
+//        }
+//        $rabbitmq = RabbitPoolManager::getInstance()->get(0.1);
+//        $mysql = MysqlPoolManager::getInstance()->get(0.1);
+//        $pool=RedisPoolManager::getInstance();
+//        echo "--------------------\r\n";
+//        $redis = RedisPoolManager::getInstance()->get(0.1);
+//        echo "[" . date('Y-m-d H:i:s') . "] Current Use RedisPoolManager Connetction Look Nums:" . RedisPoolManager::getInstance()->getLength() . ",currentNum:" . RedisPoolManager::getInstance()->getCurrentConnectionNums() . PHP_EOL;
+//        $pool->put($redis);
+//
+//        echo "[" . date('Y-m-d H:i:s') . "] haha Current Use RedisPoolManager Connetction Look Nums:" . RedisPoolManager::getInstance()->getLength() . ",currentNum:" . RedisPoolManager::getInstance()->getCurrentConnectionNums() . PHP_EOL;
+
+//        echo "[" . date('Y-m-d H:i:s') . "] Current Use RedisPoolManager Connetction Look Nums:" . RedisPoolManager::getInstance()->getLength() . ",currentNum:" . RedisPoolManager::getInstance()->getCurrentConnectionNums() . PHP_EOL;
+//        defer(function () use ($redis,$pool) {
+//            echo "##############collection#####################\r\n";
+//            $pool->put($redis);
+//
+//            echo "[" . date('Y-m-d H:i:s') . "] haha Current Use RedisPoolManager Connetction Look Nums:" . $pool->getLength() . ",currentNum:" . $pool->getCurrentConnectionNums() . PHP_EOL;
+//        });
+        // var_dump($rabbitmq,$mysql,$redis);
+//        if (!$rabbitmq) {
+//            throw new \Exception("Not Has Rabbit Pool Connection!!!");
+//        }
+//        $info = CoroutineManager::set('rabbitmq', Co::getuid()); // get context of this coroutine
+////        defer(function () use ($rabbitmq) {
+////            RabbitPoolManager::getInstance()->put($rabbitmq);
+////        });
+//        $id=CoroutineManager::get('info');
+//        var_dump($info,$id);
+//        if(ServerManager::isTaskProcess()){
+//             echo 'task process'."\r\n";
+//        }else{
+//            echo 'worker process'."\r\n";
+//        }
+        $key = 'queue';
+        $value = uniqid();
+        $redis = CommonService::getRedis();
+        $redis->rpush($key, $value);
+
+          $rb=DiPool::getInstance()->getSingleton(RabbitTransactionService::class);
+        for($i=1;$i<100;$i++){
+           $rb->order();
+        }
+
+        // echo "[" . date('Y-m-d H:i:s') . "] Current Use RedisPoolManager Connetction Look Nums:" . RedisPoolManager::getInstance()->getLength() . ",currentNum:" . RedisPoolManager::getInstance()->getCurrentConnectionNums() . PHP_EOL;
+
+        // echo "[" . date('Y-m-d H:i:s') . "] Current Use Rabbitmq Connetction Look Nums:" . RabbitPoolManager::getInstance()->getLength() . ",currentNum:" . RabbitPoolManager::getInstance()->getCurrentConnectionNums() . PHP_EOL;
+
+//        $exchange = 'test_exchange_confirm';
+//        $queue = 'test_queue_confirm';
+//        $route_key = 'test_confirm';
+//        $message="hello world!!!";
+//        $consumer_tag='consumer_tag';
+//        $res=RabbitMqService::produceMessage($message,$exchange,$queue,$route_key);
+//        var_dump($res);
+
+        //RabbitMqService::consumeMessage();
+//        $daos=DiPool::getInstance()->getDaos();
+//                    try {
+//                $resourceData =RabbitPoolManager::getInstance()->get(0.1);
+//                if ($resourceData) {
+//
+//                    print_r($resourceData);
+//
+//                    RabbitPoolManager::getInstance()->put($resourceData);
+//
+//                    //\Swoole\Coroutine::sleep(4); //sleep 10秒,模拟耗时操作
+//
+//                }
+//                echo "[" . date('Y-m-d H:i:s') . "] Current Use Rabbitmq Connetction Look Nums:" . RabbitPoolManager::getInstance()->getLength() . ",currentNum:" . RabbitPoolManager::getInstance()->getCurrentConnectionNums() . PHP_EOL;
+//
+//            } catch (\Exception $e) {
+//                echo "@@@@@@@@@@@@@@@@@@@@\r\n";
+//                echo $e->getMessage();
+//            }
 //        $list=CoroutineManager::getInstance()->listCoroutines();
 //       // print_r($list);
 //        echo CoroutineManager::getInstance()->getCoroutineId()." --------\r\n";
@@ -131,25 +283,23 @@ class IndexController extends ServerController
 //
 //        print_r($responce);
 
-       // print_r(DiPool::getInstance()->getSingletons());
+        // print_r(DiPool::getInstance()->getSingletons());
 
-       // print_r($request);
+        // print_r($request);
 
-        $orderDao=ServerManager::getApp()->orderDao;
-        print_r($orderDao);
-        print_r($orderDao->getUserService());
-
-
+//        $orderDao=ServerManager::getApp()->orderDao;
+//        print_r($orderDao);
+//        print_r($orderDao->getUserService());
 
 
         //print_r(AnnotationRegister::getInstance()->getAspectAnnotations());
         //$orderdaoclassname=OrderDao::class;
         //$orderDao=ServerManager::getApp()->$orderdaoclassname;
-        $orderDao->createUser([11,22,33]);
+        //$orderDao->createUser([11,22,33]);
 //        $object=DiPool::getInstance()->register(Test::class); //向容器内注册对象
 //        echo "-------------------------------------\r\n";
 //        print_r($object);
-       // print_r(DiPool::getInstance()->getSingletons());
+        // print_r(DiPool::getInstance()->getSingletons());
 //        echo "#######################################\r\n";
 //        print_r(DiPool::getInstance()->get(Test::class));
 
@@ -161,12 +311,12 @@ class IndexController extends ServerController
 //        print_r($this->httpInput->getAllGet());
 //        print_r($this->httpInput->postGet("test"));;
 
-        $res = RateLimit::getInstance()->minLimit('indexAction', function () {
-            echo "Rate Limit:" . date("Y-m-d H:i:s") . "\r\n";
-        }); //方法控制限流
-        if (!$res['flag']) {
-            throw  new \Exception($res['msg'] . "\r\n");
-        }
+//        $res = RateLimit::getInstance()->minLimit('indexAction', function () {
+//            echo "Rate Limit:" . date("Y-m-d H:i:s") . "\r\n";
+//        }); //方法控制限流
+//        if (!$res['flag']) {
+//            throw  new \Exception($res['msg'] . "\r\n");
+//        }
 
 //        go(function () {
 //
@@ -227,11 +377,11 @@ class IndexController extends ServerController
 
 
         //$em->attach("consulRegister","App\Listener\SendSmsListener");
-//        $e->setName("createorder");
-//        $em->addListener($smlistener,["createorder"=>1]);
-//        $em->addListener($semaillistener,["createorder"=>2]);
-        //print_r(ServerManager::$eventManager);
-        //ServerManager::$eventManager->trigger("consulRegister",null,['test','test1']);
+
+//        ServerManager::$eventManager->addListener($smlistener,["createorder"=>1]);
+//        ServerManager::$eventManager->addListener($semaillistener,["createorder"=>2]);
+//        //print_r(ServerManager::$eventManager);
+//        ServerManager::$eventManager->trigger("createorder",null,['test','test1']);
         //ServerManager::$eventManager->attach("consulRegister","App\Listener\SendSmsListener");->trigger("consulRegister",null,['test','test1']);
 //        $context = new Co\Context(); //swoole 协程上下文管理器注册上下文环境后协程执行完成后自动回收
 //        $context['crypt'] = $crypt;
@@ -267,21 +417,36 @@ class IndexController extends ServerController
 //                echo $e->getMessage();
 //            }
 
-         $userData1 = ServerManager::getApp()->userService->findUser();
+        // $userData1 = ServerManager::getApp()->userService->findUser();
 //       // $userData2 = ServerManager::getApp()->userService->findUser();
 //        $userData1 = $this->userService->findUser();
 ////        $userData2=$this->userService->findUser();
 //
 //        // print_r(ServerManager::getApp('cid_4'));
 //
-        print_r($userData1);
+        // print_r($userData1);
 //        $components=DiPool::getInstance()->getComponents();
 //        print_r($components);
 //        print_r(ServerManager::getApp()->view);
-        ServerManager::getApp()->view->assign('name', 'Http Server  sssss !!!');
-        ServerManager::getApp()->view->display('index.html');
+//        ServerManager::getApp()->view->assign('name', 'Http Server  sssss !!!');
+//        ServerManager::getApp()->view->display('index.html');
 
     }
+
+    /**
+     * @RequestMapping(path="index/handle", methods="get,post,put,delete")
+     */
+    public function handleAction(MessageConsumeOverTimeListener $messageListener, ConfirmMessageConsumeListener $confirmMessageConsumeListener)
+    {
+//        CommonService::setRedis();
+//        CommonService::setRabbit();
+        ServerManager::$eventManager->addListener($messageListener, ["order" => 1]);
+        ServerManager::$eventManager->addListener($confirmMessageConsumeListener, ["order" => 2]);
+
+        //print_r(ServerManager::$eventManager);
+        ServerManager::$eventManager->trigger("order", null, []);
+    }
+
 
     public function packAction()
     {
@@ -355,7 +520,7 @@ class IndexController extends ServerController
             try {
                 $resourceData = MysqlPoolManager::getInstance()->get(5);
                 if ($resourceData) {
-                    $result = $resourceData['resource']->query("select * from user");
+                    $result = $resourceData->query("select * from user");
                     print_r($result);
                     //\Swoole\Coroutine::sleep(4); //sleep 10秒,模拟耗时操作
                     MysqlPoolManager::getInstance()->put($resourceData);
@@ -372,12 +537,13 @@ class IndexController extends ServerController
 //            //从池子中获取一个实例
         try {
             $resourceData = RedisPoolManager::getInstance()->get(5);
+            print_r($resourceData);
             if ($resourceData) {
-                $result = $resourceData['resource']->set('name', 'tayue');
-                $result1 = $resourceData['resource']->get('name');
-                print_r($result1);
+                $result = $resourceData->set('name', 'tayue');
+                //$result1 = $resourceData->get('name');
+                // print_r($result1);
                 //\Swoole\Coroutine::sleep(4);
-                RedisPoolManager::getInstance()->put($resourceData);
+                //RedisPoolManager::getInstance()->put($resourceData);
             }
             echo "[" . date('Y-m-d H:i:s') . "] Current Use Redis Connetction Look Nums:" . RedisPoolManager::getInstance()->getLength() . ",currentNum:" . RedisPoolManager::getInstance()->getCurrentConnectionNums() . PHP_EOL;
 
