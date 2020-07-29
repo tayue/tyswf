@@ -11,7 +11,7 @@ class ConsumeProcessPool
 {
     public $mpid = 0;
     public $works = [];
-    public $max_precess = 3;
+    public $max_process = 3;
     public $new_index = 0;
     private $processName;
     private $childProcessNamePre;
@@ -24,7 +24,7 @@ class ConsumeProcessPool
     {
         try {
             $this->config = $config;
-            $processNums && $this->max_precess = $processNums;
+            $processNums && $this->max_process = $processNums;
             $this->processName = $processName;
             $this->childProcessNamePre = $childProcessNamePre;
             $this->callback=$callback;
@@ -47,7 +47,7 @@ class ConsumeProcessPool
 
     public function run($callback)
     {
-        $pool = new Pool($this->max_precess);
+        $pool = new Pool($this->max_process);
         $pool->on("WorkerStart", function ($pool, $workerId) use ($callback) {
             echo $this->childProcessNamePre . $workerId."\r\n";
             echo CoroutineManager::getInstance()->getCoroutineId()."@@@\r\n";

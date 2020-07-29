@@ -124,11 +124,11 @@ class HelloWorldTest extends \Codeception\Test\Unit
        // $this->tester->grabColumnFromDatabase('users', 'email', ['id' => 1]);
         $userData = $this->tester->grabColumnFromDatabase('user', 'age', ['id' => 1]);	//从数据库取出书籍记录
         codecept_debug($userData);
-//        $this->tester->updateInDatabase('user', array('age' => 55), array('email' => 'miles@davis.com'));
-//        $this->tester->assertInternalType("ss");
-//        $urlInfo = parse_url('http://aa.com/bb/cc/dd.html');
+       // $this->tester->updateInDatabase('user', array('age' => 55), array('email' => 'miles@davis.com'));
+       // $this->tester->assertInternalType("ss");
+        $urlInfo = parse_url('http://aa.com/bb/cc/dd.html');
 //        //在测试用例里调用
-//        $this->tester->assertArrayHasKeys('scheme,host,path', $urlInfo);
+        $this->tester->assertArrayHasKeys('scheme,host,path', $urlInfo);
 //        $this->assertTrue(true);	//传的参数不是true，断言失败
     }
 }

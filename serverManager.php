@@ -16,9 +16,9 @@ error_reporting(E_ALL);
 define("BASE_DIR", __DIR__);
 
 include_once './autoloader.php';
-include_once './App/Config/defines.php';
-$config = include_once './App/Config/config.php';
-$serverConfig = include_once './App/Config/server.php';
+include_once './Config/defines.php';
+$config = include_once './Config/config.php';
+$serverConfig = include_once './Config/server.php';
 $config = array_merge($config, $serverConfig);
 include_once VENDOR_PATH . '/autoload.php';
 date_default_timezone_set('PRC');

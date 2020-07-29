@@ -5,14 +5,15 @@ namespace App\Service;
 
 use App\Listener\MessageConsumeOverTimeListener;
 use App\Listener\ConfirmMessageConsumeListener;
+use App\Listener\ConfirmMessageConsumeDelayListener;
 use Framework\SwServer\Event\EventManager;
 use Framework\SwServer\Pool\RabbitPoolManager;
 use Framework\SwServer\Pool\RedisPoolManager;
-
 use PhpAmqpLib\Exchange\AMQPExchangeType;
 use PhpAmqpLib\Message\AMQPMessage;
 use Swoole\Coroutine as SwCoroutine;
 use Framework\SwServer\Coroutine\CoroutineManager;
+use PhpAmqpLib\Wire\AMQPTable;
 
 /**
  * 消息子系统服务
@@ -49,6 +50,17 @@ class MessageService
         $ConfirmMessageConsumeListener = new ConfirmMessageConsumeListener();
         $eventManager->addListener($ConfirmMessageConsumeListener, ["ConfirmMessageConsumeListener" => 1]);
         $eventManager->trigger("ConfirmMessageConsumeListener", null, []);
+    }
+
+    public static function ConfirmMessageConsumeDelayListener($processIndex)
+    {
+        echo "Trigger ConfirmMessageConsumeDelayListener:{$processIndex}\r\n";
+        CommonService::setRedis();
+        CommonService::setRabbit();
+        $eventManager = new EventManager(); //全局的事件管理器
+        $ConfirmMessageConsumeListener = new ConfirmMessageConsumeDelayListener();
+        $eventManager->addListener($ConfirmMessageConsumeListener, ["ConfirmMessageConsumeDelayListener" => 1]);
+        $eventManager->trigger("ConfirmMessageConsumeDelayListener", null, []);
     }
 
     public function getRedis()
@@ -315,6 +327,56 @@ class MessageService
             $data = ['status' => 0, 'result' => '任务消费失败'];
         }
         return $data;
+    }
+
+
+    //死信队列模拟延迟队列
+    public function delayPublish($data)
+    {
+        try {
+            $this->getRabbit();
+            $delayTime = $data['default_delay_time']; //参数控制(延迟时间)
+            //缓存的一组交换机及队列
+            $cacheExchangeName = 'cacheExchange_test1_' . $delayTime;
+            $cacheQueueName = 'cache_delay_test1_' . $delayTime;
+
+            //延迟队列
+            $delayExchangeName = 'delayExchange';
+            $delayRouteKey = '/delay';
+            $delayQueueName = 'delay';
+            $channel = $this->connectionRabbit->channel(); //建立通道
+
+            //是希望消息的存活周期达到时，把消息转移到死信队列当中
+            $table = new AMQPTable();
+            $table->set('x-dead-letter-exchange', $delayExchangeName); //消息死亡之后转移到的交换机
+            $table->set('x-dead-letter-routing-key', $delayRouteKey); //消息死亡之后绑定的路由key
+            $table->set('x-message-ttl', $delayTime);   //设置消息存活时间
+
+            //缓存队列
+            $channel->exchange_declare($cacheExchangeName, AMQPExchangeType::DIRECT, false, true, false);
+
+            //注意参数位置及如果之前已经生成了队列，不能覆盖修改
+            $channel->queue_declare($cacheQueueName, false, true, false, false, false, $table);
+
+            $channel->queue_bind($cacheQueueName, $cacheExchangeName);
+
+            //死信（延迟）
+            $channel->exchange_declare($delayExchangeName, AMQPExchangeType::DIRECT, false, true, false);
+            $channel->queue_declare($delayQueueName, false, true, false, false);
+            $channel->queue_bind($delayQueueName, $delayExchangeName, $delayRouteKey);
+            $msg = new AMQPMessage(json_encode($data), ['delivery_mode' => AMQPMessage:: DELIVERY_MODE_PERSISTENT]);
+            //发布消息到交换机当中,并且绑定好路由关系
+            if ($channel->basic_publish($msg, $cacheExchangeName)) {
+                $res = ["status" => 1, "result" => '发布通知'];
+            } else {
+                $res = ["status" => 1, "result" => '发布通知'];
+            }
+
+        } catch (\Throwable $e) {
+            echo $e->getMessage() . "\r\n";
+        }
+
+        return $res;
     }
 
 

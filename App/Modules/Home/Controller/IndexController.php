@@ -19,6 +19,7 @@ use App\Service\Crypt;
 use Framework\SwServer\Aop\PipelineAop;
 use Framework\SwServer\Aop\ProceedingJoinPoint;
 use Framework\SwServer\Pool\RabbitPoolManager;
+use Framework\SwServer\Rpc\Protocol;
 use Framework\Tool\Tool;
 use Framework\SwServer\Task\TaskManager;
 use Framework\Tool\PluginManager;
@@ -38,7 +39,7 @@ use Framework\SwServer\Event\EventManager;
 use Framework\SwServer\Annotation\AnnotationRegister;
 use Framework\SwServer\Pool\DiPool;
 use Swoole\Coroutine as SwCoroutine;
-
+use App\Service\RabbitNotifyTransactionService;
 use Swoole\Runtime;
 use Framework\SwServer\Helper\Helper;
 use Framework\SwServer\RateLimit\RateLimit;
@@ -57,8 +58,8 @@ use App\Service\RabbitMqService;
 use App\Service\RabbitTransactionService;
 use App\Service\CommonService;
 use App\Service\MessageService;
-
-
+use Framework\SwServer\Pool\RpcClientPoolManager;
+use App\Rpc\Contract\UserInterface;
 use Framework\SwServer\Router\Annotation\RequestMapping;
 
 /**
@@ -78,7 +79,7 @@ class IndexController extends ServerController
     public function init()
     {
         parent::init();
-        $this->echo2br("init\r\n");
+
     }
 
 
@@ -96,6 +97,9 @@ class IndexController extends ServerController
         var_dump($context);
     }
 
+    /**
+     * @RequestMapping(path="delete", methods="get,post,put,delete")
+     */
     public function destroyAction()
     {
         ServerManager::$eventManager->trigger("consulServiceDestroy");
@@ -141,26 +145,73 @@ class IndexController extends ServerController
 //         var_dump($messageRes);
     }
 
+    protected function rpcClientDemo(){
+        $rpcClient = CommonService::getRpcClient();
+        try {
+            $protocol = Protocol::new("2.0", UserInterface::class, 'getList', array(1, 'type'), []);
+            $packet=$rpcClient->getPackage();
+            $data = $packet->encode($protocol);
+            $rpcClient->send($data);
+        } catch (\Throwable $e) {
+            print_r($e->getTrace());
+        }
+        $res = $rpcClient->recv();
+        $responce = $packet->decodeResponse($res);
+        print_r($responce);
+        echo "Recv : " . $res . "\n";
+
+    }
+
+    /**
+     * @RequestMapping(path="notify", methods="get,post,put,delete")
+     */
+    public function notifyAction(){
+        if(mt_rand(1,2)==1){
+            $content='success';
+        }else{
+            $content='fail';
+        }
+
+        echo $content;
+
+    }
+
 
     /**
      * @RequestMapping(path="index/{id:\d+}", methods="get,post,put,delete")
      */
     public function indexAction(Tool $tool, Crypt $crypt, Event $e, SendSmsListener $smlistener, SendEmailsListener $semaillistener, MessageConsumeOverTimeListener $messageListener, $id)
     {
+       // echo "9503---------\r\n";
+
         // echo "[" . date('Y-m-d H:i:s') . "] Current Use RedisPoolManager Connetction Look Nums:" . RedisPoolManager::getInstance()->getLength() . ",currentNum:" . RedisPoolManager::getInstance()->getCurrentConnectionNums() . PHP_EOL;
-        echo $id . "_\r\n";
+//        echo $id . "_\r\n";
         CommonService::setConfig(ServerManager::$config);
         CommonService::setRedis();
         CommonService::setRabbit();
-        $rabbit = CommonService::getRabbit();
-        if ($rabbit->isConnected()) {
-            echo "rabbit connection!\r\n";
-        }
+        echo $this->request->fd."\r\n";
+        $rb=DiPool::getInstance()->getSingleton(RabbitNotifyTransactionService::class);
+        //for($i=1;$i<100;$i++){
+           $res=$rb->order();
+           print_r($res);
+       // }
+
+        //CommonService::setRpcClient();
+        //CommonService::setMysql();
+//        $mysql=CommonService::getMysql();
+//        $rabbit = CommonService::getRabbit();
+//        if ($rabbit->isConnected()) {
+//            echo "rabbit connection!\r\n";
+//        }
 //        $redis=SwCoroutine::getContext(CoroutineManager::getInstance()->getCoroutineId())['redis'];
 //        $aa=SwCoroutine::getContext();
 //        print_r($aa['redis']);
 //        print_r($redis);
+//        print_r($mysql->table('user')->getConnection());
         echo CoroutineManager::getInstance()->getCoroutineId() . "_____\r\n";
+//        $this->rpcClientDemo();
+
+
 //        $msg_id = "13bf96280d29783e713fd9df786a5319rjpm8rhlmlbbohfres29tff25e";
 //        $this->sendMessage($msg_id);
 
@@ -214,15 +265,15 @@ class IndexController extends ServerController
 //        }else{
 //            echo 'worker process'."\r\n";
 //        }
-        $key = 'queue';
-        $value = uniqid();
-        $redis = CommonService::getRedis();
-        $redis->rpush($key, $value);
-
-          $rb=DiPool::getInstance()->getSingleton(RabbitTransactionService::class);
-        for($i=1;$i<100;$i++){
-           $rb->order();
-        }
+//        $key = 'queue';
+//        $value = uniqid();
+//        $redis = CommonService::getRedis();
+//        $redis->rpush($key, $value);
+//
+//          $rb=DiPool::getInstance()->getSingleton(RabbitTransactionService::class);
+//        for($i=1;$i<100;$i++){
+//           $rb->order();
+//        }
 
         // echo "[" . date('Y-m-d H:i:s') . "] Current Use RedisPoolManager Connetction Look Nums:" . RedisPoolManager::getInstance()->getLength() . ",currentNum:" . RedisPoolManager::getInstance()->getCurrentConnectionNums() . PHP_EOL;
 

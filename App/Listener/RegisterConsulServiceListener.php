@@ -1,8 +1,11 @@
 <?php
+
 namespace App\Listener;
+
 use Framework\SwServer\Event\EventHandlerInterface;
 use Framework\SwServer\Event\EventInterface;
 use Framework\SwServer\Helper\Helper;
+use Framework\SwServer\ServerManager;
 
 class RegisterConsulServiceListener implements EventHandlerInterface
 {
@@ -12,11 +15,9 @@ class RegisterConsulServiceListener implements EventHandlerInterface
      */
     public function handle(EventInterface $event)
     {
-        echo "event:".$event->getName().",handle:RegisterConsulServiceListener \r\n";
-        go(function(){
-            $serviceId = Helper::registerService('swoft',"192.168.99.88",9501);
-            echo "Consul Register:".$serviceId."\r\n";
-        });
+        echo "event:" . $event->getName() . ",handle:RegisterConsulServiceListener \r\n";
+        $serviceId = Helper::registerService(ServerManager::$config['consuls'],'swoft', "192.168.99.88", 9501);
+        echo "Consul Register:" . $serviceId . "\r\n";
 
 
         //Helper::removeService($serviceId);

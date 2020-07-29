@@ -11,7 +11,7 @@ return [
         'pid_file' => ROOT_PATH . '/Data/pid.pid',
         'server_type' => 'WEB_SERVER',
         'listen_address' => '192.168.99.88',
-        'listen_port' => 9503,
+        'listen_port' => 9501,
         'www_user' => 'root',
         'setting' => [
             'reactor_num' => 1,
@@ -22,7 +22,7 @@ return [
             'daemonize' => 0,
             // TCP使用固定的worker，使用2或4或7
             'dispatch_mode' => 2,
- //            'open_eof_check' => true, //打开EOF检测
+            //            'open_eof_check' => true, //打开EOF检测
 //             'open_eof_split' => true, //打开EOF_SPLIT检测
 //             'package_eof' => "\r\n\r\n", //设置EOF
 //            'open_length_check' => false,
@@ -31,9 +31,9 @@ return [
 //            'package_body_offset' => 34,       //第几个字节开始计算长度
 //            'package_max_length' => 2000000,  //协议最大长度
         ],
-        'listen'=>[ //设置监听Rpc服务
-            ['host'=>'0.0.0.0', 'port'=>8888, 'sock_type'=>SWOOLE_SOCK_TCP],
-            ['host'=>'0.0.0.0', 'port'=>9988, 'sock_type'=>SWOOLE_SOCK_TCP],
+        'listen' => [ //设置监听Rpc服务
+            ['host' => '0.0.0.0', 'port' => 8888, 'sock_type' => SWOOLE_SOCK_TCP],
+            ['host' => '0.0.0.0', 'port' => 9988, 'sock_type' => SWOOLE_SOCK_TCP],
         ]
     ],
     'packet' => [
@@ -62,7 +62,7 @@ return [
         // 数据库类型
         'type' => 'mysql',
         // 服务器地址
-        'hostname' => 'localhost',
+        'hostname' => '192.168.99.88',
         // 数据库名
         'database' => 'test',
         // 用户名
@@ -113,21 +113,7 @@ return [
         'max_pool_size' => 1000,    //最大连接池大小
         'pool_get_timeout' => 4, //当在此时间内未获得到一个连接，会立即返回。（表示所以的连接都已在使用中）
     ],
-    'coro_mysql_pool' => [
-        'host' => '192.168.99.88',   //数据库ip
-        'port' => 3306,          //数据库端口
-        'user' => 'root',        //数据库用户名
-        'username' => 'root',        //数据库用户名
-        'password' => 'root', //数据库密码
-        'database' => 'test',   //默认数据库名
-        'timeout' => 0.5,       //数据库连接超时时间
-        'charset' => 'utf8', //默认字符集
-        'strict_type' => true,  //ture，会自动表数字转为int类型
-        'space_time' => 10 * 3600,
-        'mix_pool_size' => 3,     //最小连接池大小
-        'max_pool_size' => 10,    //最大连接池大小
-        'pool_get_timeout' => 4, //当在此时间内未获得到一个连接，会立即返回。（表示所以的连接都已在使用中）
-    ],
+
     'redis_pool' => [
         'host' => '127.0.0.1',
         'port' => 6379,
@@ -149,6 +135,17 @@ return [
         'max_pool_size' => 1200,    //最大连接池大小
         'pool_get_timeout' => 1, //当在此时间内未获得到一个连接，会立即返回。（表示所以的连接都已在使用中）
     ],
+    'rpc_client_pool' => [
+        'clients' => [
+            '0.0.0.0:8888', //微服务中的服务端地址
+            '0.0.0.0:9988',
+        ],
+        'timeout' => 1.5,
+        'space_time' => 100,
+        'mix_pool_size' => 2,     //最小连接池大小
+        'max_pool_size' => 10,    //最大连接池大小
+        'pool_get_timeout' => 4, //当在此时间内未获得到一个连接，会立即返回。（表示所以的连接都已在使用中）
+    ],
     'inotify' => [
         'afterNSeconds' => 3,
         'isOnline' => false,
@@ -157,6 +154,11 @@ return [
         'logFilePath' => dirname(__DIR__) . DIRECTORY_SEPARATOR . 'Log' . DIRECTORY_SEPARATOR . 'inotify.log',
         'monitorProcessName' => 'php-inotify-swoole-server',
         'reloadFileTypes' => ['.php', '.html', '.js'],
-    ]
+    ],
+    'consuls' => [
+        'host' => '192.168.99.88',
+        'port' => 8500,
+        'timeout' => 1
+    ],
 
 ];

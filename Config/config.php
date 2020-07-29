@@ -10,7 +10,7 @@ return [
     'id' => 'app',
     'routeRule' => 1, //1:PATHINFO 2:QUERY
     'custom_routing'=>1, //开启自定义路由解析(使用注解)
-    'consulRegister' => false, //是否开启consul服务注册
+    'consulRegister' => true, //是否开启consul服务注册
     'is_swoole_http_server' => true,
     'project_namespace' => 'App', //1:模块化组织 2:非模块化组织
     'project_type' => 1, //1:模块化组织 2:非模块化组织
