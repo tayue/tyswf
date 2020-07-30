@@ -20,7 +20,7 @@
 
     $this->assertEquals(5, $age)
     $this->assertEquals($obj1, $obj2)
-    assertNotEquals() : 与上条相反,类似于 !=
+    assertNotEquals() : 与上条相反,类似于 !=    
 
     assertInstanceOf($expected, $actual, string $message = '') : 断言 $actual 为 $expected 的实例，相当于 instanceof 关键字判断，例：
 
