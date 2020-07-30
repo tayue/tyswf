@@ -14,13 +14,13 @@
     $this->assertInternalType('bool', $var);
     $this->assertInternalType('bool', $var);
     assertNotInternalType($expected, $actual, string $message = '') : 与上一条相反，断言变量的类型不为 $expected，例：
-
+   
     $this->assertInternalType('string', $var)	//$var的类型不为string
     assertEquals(mixed $expected, mixed $actual, string $message = '') : 断言 $actual 与 $expected 相同，类似 == 比较，例：
 
     $this->assertEquals(5, $age)
     $this->assertEquals($obj1, $obj2)
-    assertNotEquals() : 与上条相反,类似于 !=    
+    assertNotEquals() : 与上条相反,类似于 !=        
 
     assertInstanceOf($expected, $actual, string $message = '') : 断言 $actual 为 $expected 的实例，相当于 instanceof 关键字判断，例：
 
